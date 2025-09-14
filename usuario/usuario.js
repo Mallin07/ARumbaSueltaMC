@@ -116,35 +116,51 @@ photoInput.addEventListener('change', (e) => {
 });
 
 saveBtn.addEventListener('click', async () => {
-  if (!currentUID) return;
-  if (!emailInput.value.includes('@')){ alert('Introduce un correo válido.'); return; }
-
-  // 1) Subir foto si hay nueva
-  let photoURL = null;
-  if (photoInput.files && photoInput.files[0]) {
-    const file = photoInput.files[0];
-    const fileRef = ref(storage, `avatars/${currentUID}/${Date.now()}-${file.name}`);
-    await uploadBytes(fileRef, file);
-    photoURL = await getDownloadURL(fileRef);
+  if (!auth.currentUser) {           // ⬅️ asegúrate de estar logueado
+    alert("Inicia sesión para subir tu foto.");
+    return;
+  }
+  if (!emailInput.value.includes('@')){
+    alert('Introduce un correo válido.');
+    return;
   }
 
-  // 2) Payload (sin memberNumber)
-  const payload = {
-    name: nameInput.value.trim(),
-    username: usernameInput.value.trim(),
-    email: emailInput.value.trim(),
-    bikeStyle: bikeStyleSelect.value,
-    displacement: displacementSelect.value,
-  };
-  if (photoURL) payload.photoURL = photoURL;
+  let photoURL = null;
 
-  // 3) Guardar
-  const userRef = doc(db, "users", currentUID);
-  await setDoc(userRef, payload, { merge: true });
+  try {
+    // 1) Subir foto si hay nueva
+    if (photoInput.files && photoInput.files[0]) {
+      const file = photoInput.files[0];
+      if (!file.type.startsWith('image/')) throw new Error('Tipo no válido');
+      if (file.size > 5 * 1024 * 1024) throw new Error('Archivo > 5MB');
 
-  alert('Datos guardados');
-  photoInput.value = '';
-  setEditing(false);
+      const uid = auth.currentUser.uid;
+      const fileRef = ref(storage, `avatars/${uid}/${Date.now()}-${file.name}`);
+      await uploadBytes(fileRef, file);                   // SDK añade el token
+      photoURL = await getDownloadURL(fileRef);
+      console.log("Subida OK:", photoURL);
+    }
+
+    // 2) Payload (sin memberNumber)
+    const payload = {
+      name: nameInput.value.trim(),
+      username: usernameInput.value.trim(),
+      email: emailInput.value.trim(),
+      bikeStyle: bikeStyleSelect.value,
+      displacement: displacementSelect.value,
+      ...(photoURL ? { photoURL } : {})
+    };
+
+    // 3) Guardar perfil
+    await setDoc(doc(db, "users", auth.currentUser.uid), payload, { merge: true });
+
+    alert('Datos guardados');
+    photoInput.value = '';
+    setEditing(false);
+  } catch (e) {
+    console.error("Upload/Save error:", e);
+    alert("No se pudo subir la imagen (revisa sesión y reglas de Storage).");
+  }
 });
 
 cancelBtn.addEventListener('click', () => {

@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Perfil de Usuario</title>
+  <link rel="stylesheet" href="usuario.css">
+</head>
+<body>
+  <header>
+
+    <nav>
+      <ul class="menu">
+        <li><a href="../principal/principal.html">Inicio</a></li>
+        <li><a href="rutas.html">Rutas</a></li>
+        <li><a href="nueva-ruta.html">Nueva Ruta</a></li>
+        <li><a href="../usuarios/usuarios.html">Usuarios</a></li>
+        <li><a href="galeria.html">Galería</a></li>
+      </ul>
+    </nav>
+  </header>
+
+
+  <main class="container">
+    <section class="card" id="userCard">
+      
+      <div class="photo-area">
+        <img id="userPhoto" src="assets/default-avatar.png" alt="Foto de perfil del usuario">
+        <input type="file" id="photoInput" accept="image/*" aria-label="Subir foto" hidden>
+        <button class="btn secondary" id="changePhotoBtn" type="button" disabled>Cambiar foto</button>
+
+        <!-- NUEVO: Nº de matrícula / socio -->
+        <p id="memberNumber" class="member-number">Matrícula de usuario: <span id="memberValue">—</span></p>
+      </div>
+
+      <form id="userForm" class="fields" novalidate>
+        <!-- Nombre visible (nombre real) -->
+        <label for="nameInput">Nombre</label>
+        <input id="nameInput" type="text" placeholder="Tu nombre" disabled>
+
+        <!-- Nombre de usuario (username / nick) -->
+        <label for="usernameInput">Usuario</label>
+        <input id="usernameInput" type="text" placeholder="tu_usuario" disabled>
+
+        <!-- Correo -->
+        <label for="emailInput">Correo electrónico</label>
+        <input id="emailInput" type="email" placeholder="correo@ejemplo.com" disabled>
+
+        <!-- Estilo de moto -->
+        <label for="bikeStyleSelect">Estilo de moto</label>
+        <select id="bikeStyleSelect" disabled>
+          <!-- orden alfabético -->
+          <option value="">-- Selecciona --</option>
+          <option value="custom">Custom</option>
+          <option value="naked">Naked</option>
+          <option value="scooter">Scooter</option>
+          <option value="sport">Sport</option>
+          <option value="trail">Trail</option>
+        </select>
+
+        <!-- Cilindrada -->
+        <label for="displacementSelect">Cilindrada</label>
+        <select id="displacementSelect" disabled>
+          <option value="">-- Selecciona --</option>
+          <option value="125">125cc</option>
+          <option value="300">300&lt;</option>
+          <option value="500">500&lt;</option>
+          <option value="600">600&lt;</option>
+          <option value="900">900&lt;</option>
+        </select>
+      </form>
+
+      <div class="actions">
+        <button class="btn" id="editBtn" type="button">Editar</button>
+        <button class="btn success" id="saveBtn" type="button" hidden>Guardar</button>
+        <button class="btn danger" id="cancelBtn" type="button" hidden>Cancelar</button>
+      </div>
+    </section>
+  </main>
+
+  <script type="module" src="usuario.js"></script>
+</body>
+</html>

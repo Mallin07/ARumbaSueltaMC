@@ -95,6 +95,19 @@ input:focus {
   margin-top: .5rem;
 }
 
+.link-under {
+  background: none;
+  border: 0;
+  padding: 4px 0 0;
+  font: inherit;
+  color: #40bfff;      /* el azul que ya usas */
+  text-decoration: underline;
+  text-align: left;    /* queda alineado a la izquierda bajo el input */
+  cursor: pointer;
+}
+
+.link-under:hover { text-decoration: none; }
+
 .error {
   color: #ff6b6b;
   margin-top: .5rem;
@@ -107,3 +120,4 @@ input:focus {
   font-size: .85rem;
   color: #aaa;
 }
+

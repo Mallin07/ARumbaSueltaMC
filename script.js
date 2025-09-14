@@ -19,7 +19,7 @@ const auth = getAuth(app);
 
 // Si ya hay sesión activa, redirige a la web principal
 onAuthStateChanged(auth, (user) => {
-  if (user) window.location.href = "inicio.html";
+  if (user) window.location.href = "inicio/inicio.html";
 });
 
 const form = document.getElementById('loginForm');

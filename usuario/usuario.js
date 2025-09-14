@@ -6,7 +6,7 @@ import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstati
 
 // 🔑 Pega aquí tu configuración real
 const firebaseConfig = {
-  apiKey: "AIzaSyBDIpcNGu8KjndeSD8V6etZ1MeRMVYi_Yw",
+  apiKey: "AIzaSyASxL2FjzUdP0Lm5pzfV5xmA1nywPMWdjw",
   authDomain: "arsmc-873f3.firebaseapp.com",
   projectId: "arsmc-873f3",
   storageBucket: "arsmc-873f3.appspot.com",

@@ -1,25 +1,37 @@
+<!DOCTYPE html>
+<html>
+<body>
 <script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-import { getStorage, ref, uploadString } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js";
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+  import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+  import { getStorage, ref, uploadString } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyBDIpcNGu8KjndeSD8V6etZ1MeRMVYi_Yw",
   authDomain: "arsmc-873f3.firebaseapp.com",
   projectId: "arsmc-873f3",
-  storageBucket: "arsmc-873f3.firebasestorage.app",
+  storageBucket: "arsmc-873f3.appspot.com",
   messagingSenderId: "558517245585",
   appId: "1:558517245585:web:9816b346b67c4d7cb69130",
   measurementId: "G-8WGXBDMSVZ"
 };
 
-const auth = getAuth(app);
-const storage = getStorage(app);
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const storage = getStorage(app);
 
-(async () => {
-  await signInWithEmailAndPassword(auth, "TU_EMAIL@dominio.com", "tu_password");
-  const r = ref(storage, `avatars/${auth.currentUser.uid}/test.txt`);
-  await uploadString(r, "hola mundo");
-  alert("Subida OK");
-})();
+  try {
+    // usa un usuario que EXISTE en Authentication
+    await signInWithEmailAndPassword(auth, "EMAIL@TU-DOMINIO.COM", "TU_PASSWORD");
+    console.log("UID:", auth.currentUser.uid);
+
+    const r = ref(storage, `avatars/${auth.currentUser.uid}/test-${Date.now()}.txt`);
+    await uploadString(r, "hola mundo");
+    alert("Subida OK");
+  } catch (e) {
+    console.error("Test error:", e.code, e.message);
+    alert(`Test error: ${e.code || e.message}`);
+  }
 </script>
+</body>
+</html>

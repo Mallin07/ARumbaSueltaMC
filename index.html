@@ -3,30 +3,31 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Mi Proyecto de Rutas</title>
+  <title>Iniciar sesión | ARSMC</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <header>
 
-    <nav>
-      <ul class="menu">
-        <li><a href="index.html">Inicio</a></li>
-        <li><a href="rutas.html">Rutas</a></li>
-        <li><a href="nueva-ruta.html">Nueva Ruta</a></li>
-        <li><a href="usuarios.html">Usuarios</a></li>
-        <li><a href="galeria.html">Galería</a></li>
-      </ul>
-    </nav>
 
-    <div class="user-btn-container">
-      <button class="user-btn">Usuario</button>
+<img src="assets/logomc.jpg" alt="Descripción de la imagen" class="imagen-logo">
+
+    <form id="loginForm">
+      <label for="loginEmail">Correo electrónico</label>
+      <input type="email" id="loginEmail" required placeholder="correo@ejemplo.com" autocomplete="username">
+
+      <label for="loginPassword">Contraseña</label>
+      <input type="password" id="loginPassword" required placeholder="••••••••" autocomplete="current-password">
+
+      <button type="submit" id="loginBtn" class="btn">Entrar</button>
+      <p id="loginError" class="error"></p>
+    </form>
+
+    <div class="foot">
+      <button id="resetBtn" class="link" type="button">¿Olvidaste tu contraseña?</button>
     </div>
-    
-  </header>
+  </main>
 
-  <img src="assets/logomc.jpg" alt="Descripción de la imagen" class="imagen-logo">
-
-  <script src="script.js"></script>
+  <!-- Firebase SDKs -->
+  <script type="module" src="script.js"></script>
 </body>
 </html>

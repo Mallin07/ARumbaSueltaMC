@@ -1,4 +1,26 @@
-// IDs clave para Firebase más adelante
+// usuario/usuario.js  (ES module)
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js";
+
+// 🔑 Pega aquí tu configuración real
+const firebaseConfig = {
+  apiKey: "AIzaSyBDIpcNGu8KjndeSD8V6etZ1MeRMVYi_Yw",
+  authDomain: "arsmc-873f3.firebaseapp.com",
+  projectId: "arsmc-873f3",
+  storageBucket: "arsmc-873f3.firebasestorage.app",
+  messagingSenderId: "558517245585",
+  appId: "1:558517245585:web:9816b346b67c4d7cb69130",
+  measurementId: "G-8WGXBDMSVZ"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+const storage = getStorage(app);
+
+// ------- refs UI -------
 const userPhoto = document.getElementById('userPhoto');
 const photoInput = document.getElementById('photoInput');
 const changePhotoBtn = document.getElementById('changePhotoBtn');
@@ -14,23 +36,10 @@ const editBtn = document.getElementById('editBtn');
 const saveBtn = document.getElementById('saveBtn');
 const cancelBtn = document.getElementById('cancelBtn');
 
-const form = document.getElementById('userForm');
-
-// Datos simulados (puedes cargarlos desde Firebase más adelante)
-const initialData = {
-  photoURL: 'assets/default-avatar.png',
-  name: 'Nombre Apellido',
-  username: 'mi_usuario',
-  email: 'correo@ejemplo.com',
-  bikeStyle: 'naked',
-  displacement: '300',
-  memberNumber: 'MC-001', // ← Nuevo
-};
-
-// Estado para restaurar si cancelas
+let currentUID = null;
 let snapshot = null;
 
-// Inicializa valores
+// ------- helpers -------
 function populate(data){
   if (data.photoURL) userPhoto.src = data.photoURL;
   nameInput.value = data.name ?? '';
@@ -40,23 +49,46 @@ function populate(data){
   displacementSelect.value = data.displacement ?? '';
   memberValue.textContent = data.memberNumber ?? '—';
 }
-populate(initialData);
 
-// Alterna modo edición
 function setEditing(editing){
-  [nameInput, usernameInput, emailInput, bikeStyleSelect, displacementSelect].forEach(el => {
-    el.disabled = !editing;
-  });
+  [nameInput, usernameInput, emailInput, bikeStyleSelect, displacementSelect].forEach(el => el.disabled = !editing);
   changePhotoBtn.disabled = !editing;
-
   editBtn.hidden = editing;
   saveBtn.hidden = !editing;
   cancelBtn.hidden = !editing;
 }
 
-// Click en “Editar”
+// ------- auth guard + carga de datos -------
+onAuthStateChanged(auth, async (user) => {
+  if (!user) {
+    // si no hay sesión, envía al login
+    window.location.href = "../login.html"; // ajusta ruta según dónde esté tu login
+    return;
+  }
+  currentUID = user.uid;
+
+  const userRef = doc(db, "users", currentUID);
+  const snap = await getDoc(userRef);
+  if (snap.exists()) {
+    populate(snap.data());
+  } else {
+    // crea doc base (el memberNumber lo rellenas tú luego desde la consola)
+    const base = {
+      name: user.displayName || "",
+      username: user.email?.split("@")[0] || "",
+      email: user.email || "",
+      bikeStyle: "",
+      displacement: "",
+      photoURL: "assets/default-avatar.png"
+    };
+    await setDoc(userRef, base, { merge: true });
+    populate(base);
+  }
+  setEditing(false);
+});
+
+// ------- UI -------
 editBtn.addEventListener('click', () => {
-  // guarda snapshot para poder cancelar
   snapshot = {
     photoURL: userPhoto.src,
     name: nameInput.value,
@@ -64,82 +96,62 @@ editBtn.addEventListener('click', () => {
     email: emailInput.value,
     bikeStyle: bikeStyleSelect.value,
     displacement: displacementSelect.value,
+    memberNumber: memberValue.textContent,
   };
   setEditing(true);
 });
 
-// Cambiar foto
-changePhotoBtn.addEventListener('click', () => {
-  photoInput.click();
-});
+changePhotoBtn.addEventListener('click', () => photoInput.click());
 
-// Previsualización de foto
 photoInput.addEventListener('change', (e) => {
   const file = e.target.files?.[0];
   if (!file) return;
-
-  // Validación simple: peso y tipo
   const maxSizeMB = 5;
-  if (!file.type.startsWith('image/')){
-    alert('Selecciona un archivo de imagen.');
-    photoInput.value = '';
-    return;
-  }
-  if (file.size > maxSizeMB * 1024 * 1024){
-    alert(`La imagen supera ${maxSizeMB}MB.`);
-    photoInput.value = '';
-    return;
-  }
+  if (!file.type.startsWith('image/')) { alert('Selecciona una imagen.'); photoInput.value=''; return; }
+  if (file.size > maxSizeMB * 1024 * 1024) { alert(`La imagen supera ${maxSizeMB}MB.`); photoInput.value=''; return; }
 
   const reader = new FileReader();
-  reader.onload = () => {
-    userPhoto.src = reader.result; // previsualiza
-  };
+  reader.onload = () => { userPhoto.src = reader.result; };
   reader.readAsDataURL(file);
 });
 
-// Guardar (aquí es donde luego llamarás a Firebase)
 saveBtn.addEventListener('click', async () => {
-  // Validaciones mínimas
-  if (!emailInput.value.includes('@')){
-    alert('Introduce un correo válido.');
-    return;
+  if (!currentUID) return;
+  if (!emailInput.value.includes('@')){ alert('Introduce un correo válido.'); return; }
+
+  // 1) Subir foto si hay nueva
+  let photoURL = null;
+  if (photoInput.files && photoInput.files[0]) {
+    const file = photoInput.files[0];
+    const fileRef = ref(storage, `avatars/${currentUID}/${Date.now()}-${file.name}`);
+    await uploadBytes(fileRef, file);
+    photoURL = await getDownloadURL(fileRef);
   }
 
+  // 2) Payload (sin memberNumber)
   const payload = {
     name: nameInput.value.trim(),
     username: usernameInput.value.trim(),
     email: emailInput.value.trim(),
     bikeStyle: bikeStyleSelect.value,
     displacement: displacementSelect.value,
-    // La foto:
-    // - Si usas Firebase Storage, sube 'photoInput.files[0]' y guarda la URL.
-    // - Si no ha cambiado, puedes mantener userPhoto.src si ya es una URL.
   };
+  if (photoURL) payload.photoURL = photoURL;
 
-  // 🔜 Aquí integrarías Firebase:
-  // 1) Subir foto a Firebase Storage (si hay archivo)
-  // 2) Obtener downloadURL
-  // 3) Guardar payload + photoURL en Firestore/Realtime DB
-  // try { ... } catch (err) { ... }
+  // 3) Guardar
+  const userRef = doc(db, "users", currentUID);
+  await setDoc(userRef, payload, { merge: true });
 
-  console.log('Datos a guardar:', payload);
-  alert('Datos guardados (demo). Integra Firebase para persistir.');
-
-  // Tras guardar, resetea input de archivo y bloquea edición
+  alert('Datos guardados');
   photoInput.value = '';
   setEditing(false);
 });
 
-// Cancelar
 cancelBtn.addEventListener('click', () => {
-  if (snapshot){
-    populate(snapshot);
-    userPhoto.src = snapshot.photoURL;
-  }
+  if (snapshot) populate(snapshot);
   photoInput.value = '';
   setEditing(false);
 });
 
-// Modo inicial: solo lectura
+// modo inicial
 setEditing(false);

@@ -1,0 +1,22 @@
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+import { getStorage, ref, uploadString } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js";
+
+const app = initializeApp({
+  apiKey: "...",
+  authDomain: "...",
+  projectId: "...",
+  storageBucket: "arsmc-873f3.appspot.com",
+});
+
+const auth = getAuth(app);
+const storage = getStorage(app);
+
+(async () => {
+  await signInWithEmailAndPassword(auth, "TU_EMAIL@dominio.com", "tu_password");
+  const r = ref(storage, `avatars/${auth.currentUser.uid}/test.txt`);
+  await uploadString(r, "hola mundo");
+  alert("Subida OK");
+})();
+</script>

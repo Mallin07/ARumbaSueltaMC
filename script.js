@@ -4,10 +4,10 @@ import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, sendPasswordRe
 
 // ⚠️ Sustituye los valores por tu configuración real de Firebase
 const firebaseConfig = {
-  apiKey: "AIzaSyBDIpcNGu8KjndeSD8V6etZ1MeRMVYi_Yw",
+  apiKey: "AIzaSyASxL2FjzUdP0Lm5pzfV5xmA1nywPMWdjw",
   authDomain: "arsmc-873f3.firebaseapp.com",
   projectId: "arsmc-873f3",
-  storageBucket: "arsmc-873f3.firebasestorage.app",
+  storageBucket: "arsmc-873f3.appspot.com",
   messagingSenderId: "558517245585",
   appId: "1:558517245585:web:9816b346b67c4d7cb69130",
   measurementId: "G-8WGXBDMSVZ"

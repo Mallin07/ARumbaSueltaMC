@@ -62,7 +62,7 @@ function setEditing(editing){
 onAuthStateChanged(auth, async (user) => {
   if (!user) {
     // si no hay sesión, envía al login
-    window.location.href = "../login.html"; // ajusta ruta según dónde esté tu login
+    window.location.href = "../index.html"; // ajusta ruta según dónde esté tu login
     return;
   }
   currentUID = user.uid;

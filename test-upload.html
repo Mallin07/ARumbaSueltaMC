@@ -3,12 +3,15 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/fireba
 import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 import { getStorage, ref, uploadString } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js";
 
-const app = initializeApp({
-  apiKey: "...",
-  authDomain: "...",
-  projectId: "...",
-  storageBucket: "arsmc-873f3.appspot.com",
-});
+const firebaseConfig = {
+  apiKey: "AIzaSyBDIpcNGu8KjndeSD8V6etZ1MeRMVYi_Yw",
+  authDomain: "arsmc-873f3.firebaseapp.com",
+  projectId: "arsmc-873f3",
+  storageBucket: "arsmc-873f3.firebasestorage.app",
+  messagingSenderId: "558517245585",
+  appId: "1:558517245585:web:9816b346b67c4d7cb69130",
+  measurementId: "G-8WGXBDMSVZ"
+};
 
 const auth = getAuth(app);
 const storage = getStorage(app);

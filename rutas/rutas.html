@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Rutas</title>
+  <link rel="stylesheet" href="rutas.css">
+</head>
+<body>
+  <header>
+    <nav>
+      <ul class="menu">
+        <li><a href="../principal/principal.html">Inicio</a></li>
+        <li><a href="../rutas/rutas.html" aria-current="page">Rutas</a></li>
+        <li><a href="../rutas/nuevaruta.html">Nueva Ruta</a></li>
+        <li><a href="../usuarios/usuarios.html">Usuarios</a></li>
+        <li><a href="../galeria/galeria.html">Galería</a></li>
+      </ul>
+    </nav>
+    <div class="user-btn-container">
+      <a href="../usuario/usuario.html" class="user-btn">Usuario</a>
+    </div>
+  </header>
+
+  <main class="container">
+    <section class="card">
+      <h1>Próximas rutas</h1>
+      <div id="routesList" class="routes-list"><!-- cards aquí --></div>
+      <p id="emptyMsg" class="muted" hidden>No hay rutas próximas.</p>
+    </section>
+  </main>
+
+  <script type="module" src="rutas.js"></script>
+</body>
+</html>

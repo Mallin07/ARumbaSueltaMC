@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Nueva ruta</title>
+  <link rel="stylesheet" href="nuevaruta.css">
+</head>
+<body>
+  <header>
+
+    <nav>
+      <ul class="menu">
+        <li><a href="principal.html">Inicio</a></li>
+        <li><a href="../rutas/">Rutas</a></li>
+        <li><a href="nueva-ruta.html">Nueva Ruta</a></li>
+        <li><a href="../usuarios/usuarios.html">Usuarios</a></li>
+        <li><a href="galeria.html">Galería</a></li>
+    </nav>
+
+    <div class="user-btn-container">
+      <a href="../usuario/usuario.html" class="user-btn">Usuario</a>
+    </div>
+    
+  </header>
+
+  <main class="container">
+    <section class="card">
+      <h1 style="grid-column:1 / -1; margin:0 0 .5rem;">Crear nueva ruta</h1>
+
+      <!-- Reutiliza .fields para inputs con el mismo look -->
+      <form id="routeForm" class="fields" novalidate>
+        <label for="routeName">Nombre de la ruta</label>
+        <input id="routeName" type="text" required placeholder="Ruta por la sierra">
+
+        <!-- Fila en dos columnas (fecha / hora) -->
+        <div class="inline-2">
+          <div>
+            <label for="routeDate">Fecha</label>
+            <input id="routeDate" type="date" required>
+          </div>
+          <div>
+            <label for="routeTime">Hora de salida</label>
+            <input id="routeTime" type="time" required>
+          </div>
+        </div>
+
+        <label for="startLink">Punto de salida (enlace Google Maps)</label>
+        <input id="startLink" type="url" required placeholder="https://maps.google.com/..." inputmode="url">
+
+        <div class="stops-header">
+          <h2>Paradas</h2>
+          <button id="addStopBtn" type="button" class="btn secondary">Añadir parada</button>
+        </div>
+
+        <div id="stopsList" class="stops-list"><!-- se insertan filas aquí --></div>
+
+        <label for="endPoint">Punto de llegada</label>
+        <input id="endPoint" type="text" required placeholder="Plaza Mayor, Pueblo X">
+
+        <label for="routeLink">Enlace a la ruta (Google Maps)</label>
+        <input id="routeLink" type="url" required placeholder="https://maps.google.com/..." inputmode="url">
+
+        <p id="formError" class="error" aria-live="polite"></p>
+
+        <!-- 🔥 NUEVO: Velocidad -->
+<fieldset class="group">
+  <legend>Velocidad</legend>
+  <div class="radio-chips">
+    <label class="chip">
+      <input type="radio" name="speed" value="chill">
+      <span>Vamos del chill 🐢</span>
+    </label>
+    <label class="chip">
+      <input type="radio" name="speed" value="alegre">
+      <span>Alegres pero sin peligro ⚡</span>
+    </label>
+    <label class="chip">
+      <input type="radio" name="speed" value="album">
+      <span>Queremos un álbum de fotos 📸</span>
+    </label>
+  </div>
+</fieldset>
+
+<!-- 🔥 NUEVO: Comidas -->
+<fieldset class="group">
+  <legend>Comidas</legend>
+  <div class="grid-2">
+    <div>
+      <label for="breakfast">Desayuno</label>
+      <select id="breakfast" required>
+        <option value="">-- Selecciona --</option>
+        <option value="casa">En casa</option>
+        <option value="bocata">Bocatas</option>
+        <option value="restaurante">Restaurante</option>
+      </select>
+    </div>
+    <div>
+      <label for="lunch">Comida</label>
+      <select id="lunch" required>
+        <option value="">-- Selecciona --</option>
+        <option value="casa">En casa</option>
+        <option value="bocata">Bocatas</option>
+        <option value="restaurante">Restaurante</option>
+      </select>
+    </div>
+  </div>
+</fieldset>
+
+        <div class="actions">
+          <button class="btn" id="saveBtn" type="submit">Guardar ruta</button>
+          <button class="btn secondary" id="cancelBtn" type="button">Cancelar</button>
+        </div>
+      </form>
+    </section>
+  </main>
+
+  <script type="module" src="nuevaruta.js"></script>
+</body>
+</html>

@@ -1,0 +1,258 @@
+/*/* =========================
+   HEADER (menú + botón Usuario)
+   ========================= */
+header{
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  background: #000;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;    /* menú pegado a la izquierda */
+  gap: 1rem;
+  padding: .6rem 1rem;            /* header más compacto */
+  z-index: 100;
+}
+.menu{
+  list-style: none;
+  display: flex;
+  gap: 2rem;
+  margin: 0;
+  padding: 0;
+}
+.menu a{
+  color: #fff;
+  text-decoration: none;
+  font-weight: bold;
+  transition: color .3s ease;
+}
+.menu a:hover{ color: #00c3ff; }
+.user-btn-container{
+  margin-left: auto;              /* empuja el botón a la derecha */
+  display: flex;
+  align-items: center;
+}
+.user-btn{
+  background-color: #00c3ff;
+  color: #fff;
+  border: 0;
+  padding: .5rem 1rem;
+  border-radius: 5px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background .3s ease;
+  text-decoration: none;
+  display: inline-block;
+}
+.user-btn:hover{ background-color: #009ccc; }
+
+:root{
+  --bg:#000;
+  --card:#111;
+  --muted:#888;
+  --text:#fff;
+  --primary:#00c3ff;
+  --primary-700:#009ccc;
+  --success:#27ae60;
+  --danger:#e74c3c;
+  --ring:rgba(255,255,255,.15);
+}
+
+/* Reset mínimo */
+*{ box-sizing:border-box; }
+html,body{ margin:0; padding:0; }
+body{
+  font-family: Arial, Helvetica, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+}
+
+/* Ajusta el espacio bajo el header para el contenido */
+.container{
+  max-width: 760px;
+  margin: 92px auto 2rem;        /* 👈 ~altura del header + aire */
+  padding: 0 1rem;
+}
+
+
+/* Si tu header es fijo y tapa el contenido, añade más margen arriba aquí */
+.container{
+  max-width: 760px;              /* << dimensiones como el primer diseño */
+  margin: 2rem auto;             /* centrado y aire */
+  padding: 0 1rem;
+  margin-top: 100px;
+}
+
+.card{
+  background: var(--card);
+  border: 1px solid #222;
+  border-radius: 16px;
+  padding: 1.5rem;
+  box-shadow: 0 10px 30px rgba(0,0,0,.35);
+}
+
+h1{ margin: 0 0 1rem; font-size: 1.5rem; }
+
+/* Labels + campos con look usuario.css */
+label{
+  display:block;
+  margin-top:1rem;
+  margin-bottom:.35rem;
+  color: var(--muted);
+  font-size:.95rem;
+}
+
+input[type="text"],
+input[type="date"],
+input[type="time"],
+input[type="url"],
+select{
+  width:100%;
+  padding:.7rem .85rem;
+  border-radius:.65rem;
+  border:1px solid #222;
+  background:#0b0b0b;
+  color:var(--text);
+  outline:none;
+}
+
+input:focus,
+select:focus{
+  border-color: var(--ring);
+  box-shadow: 0 0 0 4px var(--ring);
+}
+
+/* Dos columnas para fecha/hora como al principio */
+.grid-2{
+  display:grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+/* Paradas */
+.stops-header{
+  display:flex; align-items:center; justify-content:space-between;
+  margin-top:1rem;
+}
+.stops-header h2{
+  margin:0; font-size:1.05rem; color:#ddd; font-weight:700;
+}
+
+.stops-list{
+  display:flex; flex-direction:column; gap:.5rem;
+  margin-top:.35rem;
+}
+
+.stop-row{
+  display:grid;
+  grid-template-columns: 1fr auto;
+  gap:.5rem;
+}
+.stop-row input{
+  padding:.7rem .85rem;
+  border-radius:.65rem;
+  border:1px solid #222;
+  background:#0b0b0b;
+  color:var(--text);
+  outline:none;
+}
+.stop-row input:focus{
+  border-color: var(--ring);
+  box-shadow: 0 0 0 4px var(--ring);
+}
+
+.icon-btn{
+  border:1px solid #2a2a2a;
+  background:#222;
+  color:#fff;
+  padding:.45rem .7rem;
+  border-radius:.55rem;
+  cursor:pointer;
+}
+.icon-btn:hover{ background:#2a2a2a; }
+
+/* Botones con el mismo estilo del usuario.css */
+.actions{
+  display:flex; gap:.75rem; justify-content:flex-end;
+  margin-top:1.25rem;
+}
+.btn{
+  border:none;
+  background:var(--primary);
+  color:#000;
+  font-weight:700;
+  padding:.7rem 1rem;
+  border-radius:.65rem;
+  cursor:pointer;
+  transition:.2s ease;
+}
+.btn:hover{ background:var(--primary-700); }
+.btn.secondary{
+  background:#222; color:#fff; border:1px solid #2a2a2a;
+}
+.btn.secondary:hover{ background:#2a2a2a; }
+.btn.ghost{
+  background:transparent; border:1px solid #2a2a2a; color:#bbb;
+}
+.btn:disabled{ opacity:.6; cursor:not-allowed; }
+
+/* Mensajes de error */
+.error{
+  color: var(--danger);
+  min-height: 1.25rem;
+  margin-top:.5rem;
+}
+
+/* ---- Grupos / fieldset ---- */
+.group{
+  border:1px solid #222;
+  border-radius:12px;
+  padding:1rem;
+  margin-top:1rem;
+  background:#0b0b0b;
+}
+.group > legend{
+  padding:0 .4rem;
+  color:#bbb;
+  font-weight:700;
+}
+
+/* ---- Chips de velocidad ---- */
+.radio-chips{
+  display:flex;
+  gap:.5rem;
+  flex-wrap:wrap;
+  margin-top:.25rem;
+}
+.chip{
+  position:relative;
+  display:inline-flex;
+  align-items:center;
+  cursor:pointer;
+}
+.chip input{
+  position:absolute;
+  inset:0;
+  opacity:0;
+}
+.chip span{
+  display:inline-block;
+  padding:.55rem .8rem;
+  border:1px solid #2a2a2a;
+  background:#111;
+  color:#ddd;
+  border-radius:.65rem;
+  user-select:none;
+  transition:.15s ease;
+}
+.chip input:checked + span{
+  background:var(--primary);
+  color:#000;
+  border-color:var(--primary);
+}
+.chip:hover span{ background:#151515; }
+
+
+/* Responsive */
+@media (max-width: 640px){
+  .grid-2{ grid-template-columns: 1fr; }
+}

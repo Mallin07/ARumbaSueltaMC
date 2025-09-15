@@ -84,3 +84,62 @@ resetBtn.addEventListener('click', async () => {
     err.textContent = "No se pudo enviar el correo de recuperación.";
   }
 });
+
+// npm i firebase-admin firebase-functions
+const functions = require("firebase-functions");
+const admin = require("firebase-admin");
+admin.initializeApp();
+const db = admin.firestore();
+
+const COUNTER_REF = db.doc("meta/memberCounter");
+
+// Helpers
+async function getNextNumberByTx(tx) {
+  const snap = await tx.get(COUNTER_REF);
+  const current = snap.exists ? (snap.data().value || 0) : 0;
+  const next = current + 1;
+  // guarda el nuevo valor del contador
+  if (snap.exists) tx.update(COUNTER_REF, { value: next });
+  else tx.set(COUNTER_REF, { value: next });
+  return next;
+}
+
+// Asignar número al crear doc de usuario
+exports.assignMemberNumber = functions.firestore
+  .document("users/{uid}")
+  .onCreate(async (snap, ctx) => {
+    await db.runTransaction(async (tx) => {
+      const next = await getNextNumberByTx(tx);
+      tx.update(snap.ref, { memberNumber: next }); // guarda solo el número (int)
+    });
+  });
+
+// Compactar al borrar: todo > eliminado baja 1 y decrementa el contador
+exports.compactNumbersOnDelete = functions.firestore
+  .document("users/{uid}")
+  .onDelete(async (snap, ctx) => {
+    const removed = snap.data()?.memberNumber;
+    if (!removed) return;
+
+    // 1) Shift: todos los usuarios con número > removed bajan 1
+    const q = db.collection("users")
+      .where("memberNumber", ">", removed)
+      .orderBy("memberNumber");
+    const all = await q.get();
+
+    // batched writes (máx. 500 por batch)
+    let batch = db.batch();
+    let count = 0;
+    for (const doc of all.docs) {
+      batch.update(doc.ref, { memberNumber: (doc.get("memberNumber") || 0) - 1 });
+      count++;
+      if (count === 400) { await batch.commit(); batch = db.batch(); count = 0; }
+    }
+    if (count) await batch.commit();
+
+    // 2) Ajusta el contador global (-1)
+    await COUNTER_REF.set(
+      { value: admin.firestore.FieldValue.increment(-1) },
+      { merge: true }
+    );
+  });

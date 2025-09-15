@@ -25,10 +25,7 @@ const routesList = document.getElementById("routesList");
 const emptyMsg = document.getElementById("emptyMsg");
 
 // Helpers
-const todayStr = () => {
-  // YYYY-MM-DD local (sv-SE)
-  return new Date().toLocaleDateString('sv-SE'); // e.g. "2025-09-14"
-};
+const todayStr = () => new Date().toLocaleDateString("sv-SE"); // YYYY-MM-DD
 
 function speedLabel(v){
   return v === "chill" ? "Vamos del chill 🐢"
@@ -72,9 +69,7 @@ function routeCardTemplate(routeId, data, joined, count){
       </div>
 
       <div class="attendees">
-        <div class="details" id="att-${routeId}">
-          <!-- filas de asistentes -->
-        </div>
+        <div class="details" id="att-${routeId}"></div>
       </div>
     </div>
   `;
@@ -120,11 +115,9 @@ async function toggleJoin(routeId){
   const myDocRef = doc(db, "routes", routeId, "attendees", user.uid);
   const cur = await getDoc(myDocRef);
   if (cur.exists()){
-    // Desapuntarse
     await deleteDoc(myDocRef);
     return { joined:false };
   } else {
-    // Cargar info básica del perfil
     const uref = doc(db, "users", user.uid);
     const usnap = await getDoc(uref);
     const u = usnap.exists() ? usnap.data() : {};
@@ -136,35 +129,81 @@ async function toggleJoin(routeId){
       bikeStyle: u.bikeStyle || "",
       displacement: u.displacement || "",
       photoURL: u.photoURL || "",
-      joinedAt: new Date() // solo decorativo; las reglas pueden permitirlo
+      joinedAt: new Date()
     };
     await setDoc(myDocRef, info, { merge: true });
     return { joined:true };
   }
 }
 
-// Render listado (sólo próximas)
+let unsubscribe = null;
+
+function attachButtonHandlers(){
+  // Evita duplicar listeners: primero elimina todos clonando el nodo
+  const fresh = routesList.cloneNode(true);
+  routesList.parentNode.replaceChild(fresh, routesList);
+
+  // Re-selecciona tras el replace
+  const container = document.getElementById("routesList");
+
+  container.querySelectorAll(".join-btn").forEach(btn => {
+    btn.addEventListener("click", async (e) => {
+      const rid = e.currentTarget.getAttribute("data-id");
+      e.currentTarget.disabled = true;
+      try{
+        const res = await toggleJoin(rid);
+        e.currentTarget.textContent = res.joined ? "Desapuntarme" : "Apuntarme";
+        const countEl = container.querySelector(`.count[data-id="${rid}"]`);
+        const current = parseInt(countEl.textContent.replace(/[()]/g,"")) || 0;
+        countEl.textContent = `(${res.joined ? current+1 : current-1})`;
+      } finally{
+        e.currentTarget.disabled = false;
+      }
+    });
+  });
+
+  container.querySelectorAll(".toggle-att").forEach(btn => {
+    btn.addEventListener("click", async (e) => {
+      const rid = e.currentTarget.getAttribute("data-id");
+      const panel = document.getElementById(`att-${rid}`);
+      if (!panel?.classList.contains("open")){
+        await loadAttendees(rid);
+      } else {
+        panel.classList.remove("open");
+        panel.innerHTML = "";
+      }
+    });
+  });
+}
+
+// Render listado (sólo próximas) con fallback si falta índice
 function setupList(){
-  const qrt = query(
+  // consulta compuesta (date >= hoy, orderBy date + time)
+  const qCompound = query(
     collection(db, "routes"),
     where("date", ">=", todayStr()),
-    orderBy("date"), orderBy("time")
+    orderBy("date"),
+    orderBy("time")
   );
 
-  onSnapshot(qrt, async (snap) => {
-    // Limpia
-    routesList.innerHTML = "";
+  // consulta simple (sin orderBy time)
+  const qSimple = query(
+    collection(db, "routes"),
+    where("date", ">=", todayStr()),
+    orderBy("date")
+  );
+
+  const render = async (snap) => {
+    const container = document.getElementById("routesList");
+    container.innerHTML = "";
     if (snap.empty){ emptyMsg.hidden = false; return; }
     emptyMsg.hidden = true;
 
     const uid = auth.currentUser?.uid;
 
-    // Construye cards (con counts y estado de unión)
     for (const docSnap of snap.docs){
       const data = docSnap.data();
       const id = docSnap.id;
-
-      // seguridad extra en cliente: ocultar vencidas si el reloj local va mal
       if (data.date < todayStr()) continue;
 
       const [count, joined] = await Promise.all([
@@ -172,40 +211,47 @@ function setupList(){
         userJoinedRoute(id, uid)
       ]);
 
-      routesList.insertAdjacentHTML("beforeend", routeCardTemplate(id, data, joined, count));
+      container.insertAdjacentHTML("beforeend", routeCardTemplate(id, data, joined, count));
     }
 
-    // Wire up botones
-    routesList.querySelectorAll(".join-btn").forEach(btn => {
-      btn.addEventListener("click", async (e) => {
-        const rid = e.currentTarget.getAttribute("data-id");
-        e.currentTarget.disabled = true;
-        try{
-          const res = await toggleJoin(rid);
-          // Actualiza botón y contador
-          e.currentTarget.textContent = res.joined ? "Desapuntarme" : "Apuntarme";
-          const countEl = routesList.querySelector(`.count[data-id="${rid}"]`);
-          const current = parseInt(countEl.textContent.replace(/[()]/g,"")) || 0;
-          countEl.textContent = `(${res.joined ? current+1 : current-1})`;
-        } finally{
-          e.currentTarget.disabled = false;
-        }
-      });
-    });
+    attachButtonHandlers();
+  };
 
-    routesList.querySelectorAll(".toggle-att").forEach(btn => {
-      btn.addEventListener("click", async (e) => {
-        const rid = e.currentTarget.getAttribute("data-id");
-        const panel = document.getElementById(`att-${rid}`);
-        if (!panel?.classList.contains("open")){
-          await loadAttendees(rid);
-        } else {
-          panel.classList.remove("open");
-          panel.innerHTML = "";
-        }
-      });
-    });
-  });
+  // Limpia anterior suscripción si la hubiera
+  if (typeof unsubscribe === "function") { unsubscribe(); unsubscribe = null; }
+
+  // Intenta con compuesta; si falla por índice, usa simple
+  unsubscribe = onSnapshot(
+    qCompound,
+    render,
+    (error) => {
+      console.warn("Consulta compuesta falló:", error);
+      if (error?.code === "failed-precondition") {
+        // falta índice: reintenta con consulta simple
+        if (typeof unsubscribe === "function") { unsubscribe(); }
+        unsubscribe = onSnapshot(
+          qSimple,
+          render,
+          (err2) => {
+            console.error("Error cargando rutas (simple):", err2);
+            emptyMsg.hidden = false;
+            emptyMsg.textContent =
+              err2?.code === "permission-denied"
+                ? "No tienes permiso para leer las rutas (revisa reglas)."
+                : "No se pudieron cargar las rutas.";
+          }
+        );
+        emptyMsg.hidden = false;
+        emptyMsg.textContent = "Cargando sin ordenar por hora (crea el índice date+time para ordenar mejor).";
+      } else if (error?.code === "permission-denied") {
+        emptyMsg.hidden = false;
+        emptyMsg.textContent = "No tienes permiso para leer las rutas (revisa reglas).";
+      } else {
+        emptyMsg.hidden = false;
+        emptyMsg.textContent = "No se pudieron cargar las rutas.";
+      }
+    }
+  );
 }
 
 // Auth + init

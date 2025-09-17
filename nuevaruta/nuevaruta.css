@@ -251,6 +251,11 @@ select:focus{
 }
 .chip:hover span{ background:#151515; }
 
+.req {
+  color: red;
+  margin-left: .25rem;
+  font-weight: bold;
+}
 
 /* Responsive */
 @media (max-width: 640px){

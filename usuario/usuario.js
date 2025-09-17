@@ -26,16 +26,15 @@ const db = getFirestore(app);
 const storage = getStorage(app);
 
 // ------- refs UI -------
-const userPhoto        = document.getElementById('userPhoto');
-const photoInput       = document.getElementById('photoInput');
-const changePhotoBtn   = document.getElementById('changePhotoBtn');
+const userPhoto          = document.getElementById('userPhoto');
+const photoInput         = document.getElementById('photoInput');
+const changePhotoBtn     = document.getElementById('changePhotoBtn');
 
-const nameInput        = document.getElementById('nameInput');
-const usernameInput    = document.getElementById('usernameInput');
-const emailInput       = document.getElementById('emailInput');
-const bikeStyleSelect  = document.getElementById('bikeStyleSelect');
+const usernameInput      = document.getElementById('usernameInput');
+const emailInput         = document.getElementById('emailInput');
+const bikeStyleSelect    = document.getElementById('bikeStyleSelect');
 const displacementSelect = document.getElementById('displacementSelect');
-const memberValue      = document.getElementById('memberValue');
+const memberValue        = document.getElementById('memberValue');
 
 const editBtn   = document.getElementById('editBtn');
 const saveBtn   = document.getElementById('saveBtn');
@@ -50,20 +49,23 @@ function fmt(n) {
 }
 function populate(data){
   if (data.photoURL) userPhoto.src = data.photoURL;
-  nameInput.value         = data.name ?? '';
-  usernameInput.value     = data.username ?? '';
-  emailInput.value        = data.email ?? '';
-  bikeStyleSelect.value   = data.bikeStyle ?? '';
-  displacementSelect.value= data.displacement ?? '';
-  memberValue.textContent = fmt(data.memberNumber);
+  usernameInput.value       = data.username ?? '';
+  emailInput.value          = data.email ?? '';
+  bikeStyleSelect.value     = data.bikeStyle ?? '';
+  displacementSelect.value  = data.displacement ?? '';
+  memberValue.textContent   = fmt(data.memberNumber);
 }
+// Mostrar/ocultar edición + botón de foto solo en edición
 function setEditing(editing){
-  [nameInput, usernameInput, emailInput, bikeStyleSelect, displacementSelect]
+  [usernameInput, emailInput, bikeStyleSelect, displacementSelect]
     .forEach(el => el.disabled = !editing);
-  changePhotoBtn.disabled = !editing;
-  editBtn.hidden  = editing;
-  saveBtn.hidden  = !editing;
-  cancelBtn.hidden= !editing;
+
+  changePhotoBtn.hidden   = !editing;
+  changePhotoBtn.disabled = !editing; // por si hay estilos que usan :disabled
+
+  editBtn.hidden   = editing;
+  saveBtn.hidden   = !editing;
+  cancelBtn.hidden = !editing;
 }
 
 // Migración opcional: si NO existe users/{uid}, intenta encontrar un doc antiguo por email y lo copia
@@ -101,7 +103,6 @@ onAuthStateChanged(auth, async (user) => {
       populate(snap.data());
     } else {
       const base = {
-        name: user.displayName || "",
         username: user.email?.split("@")[0] || "",
         email: user.email || "",
         bikeStyle: "",
@@ -123,7 +124,6 @@ onAuthStateChanged(auth, async (user) => {
 editBtn.addEventListener('click', () => {
   snapshot = {
     photoURL: userPhoto.src,
-    name: nameInput.value,
     username: usernameInput.value,
     email: emailInput.value,
     bikeStyle: bikeStyleSelect.value,
@@ -163,30 +163,28 @@ saveBtn.addEventListener('click', async () => {
 
   try {
     // 1) Subir foto si hay nueva
-if (photoInput.files && photoInput.files[0]) {
-  const file = photoInput.files[0];
+    if (photoInput.files && photoInput.files[0]) {
+      const file = photoInput.files[0];
 
-  if (!file.type.startsWith('image/')) {
-    throw Object.assign(new Error('Tipo no válido'), { code: 'invalid-type' });
-  }
-  if (file.size > 5 * 1024 * 1024) {
-    throw Object.assign(new Error('Archivo > 5MB'), { code: 'file-too-large' });
-  }
+      if (!file.type.startsWith('image/')) {
+        throw Object.assign(new Error('Tipo no válido'), { code: 'invalid-type' });
+      }
+      if (file.size > 5 * 1024 * 1024) {
+        throw Object.assign(new Error('Archivo > 5MB'), { code: 'file-too-large' });
+      }
 
-  const path = `avatars/${user.uid}/${Date.now()}-${file.name}`;
-  const fileRef = ref(storage, path);
+      const path = `avatars/${user.uid}/${Date.now()}-${file.name}`;
+      const fileRef = ref(storage, path);
 
-  const metadata = { contentType: file.type };
+      const metadata = { contentType: file.type };
 
-  await uploadBytes(fileRef, file, metadata);   // <— aquí va la metadata
-  photoURL = await getDownloadURL(fileRef);
-  console.log('Subida OK:', { path, photoURL, contentType: file.type });
-}
+      await uploadBytes(fileRef, file, metadata);
+      photoURL = await getDownloadURL(fileRef);
+      console.log('Subida OK:', { path, photoURL, contentType: file.type });
+    }
 
-
-    // 2) Guardar perfil (sin memberNumber)
+    // 2) Guardar perfil (sin name)
     const payload = {
-      name: nameInput.value.trim(),
       username: usernameInput.value.trim(),
       email: emailInput.value.trim(),
       bikeStyle: bikeStyleSelect.value,

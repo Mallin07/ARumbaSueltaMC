@@ -1,9 +1,6 @@
-body {
-  margin: 0;
-  background: #000;
-  color: #fff;
-  font-family: system-ui, -apple-system, Arial, sans-serif;
-}
+/* =========================
+   HEADER (menú + botón Usuario)
+   ========================= */
 header{
   position: fixed;
   top: 0; left: 0; right: 0;
@@ -48,22 +45,39 @@ header{
 }
 .user-btn:hover{ background-color: #009ccc; }
 
-.container { max-width: 1100px; margin: 2rem auto; padding: 0 1rem;margin-top: 80px;}
-h1 { margin-bottom: 1rem; }
+/* =========================
+   RESET + BASE
+   ========================= */
+*{ box-sizing: border-box; margin: 0; padding: 0; }
+html, body{ height: 100%; }
+body{
+  font-family: Arial, Helvetica, sans-serif;
+  background: #000;
+  color: #fff;
+}
 
-.grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-  gap: 1rem;
+/* =========================
+   CONTENIDO
+   ========================= */
+main{
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  padding-top: 72px;              /* deja sitio al header fijo (~.6rem + line-height) */
+  text-align: center;
 }
-.card {
-  background:#111; border:1px solid #222; border-radius:12px; padding:1rem;
+main h2{
+  font-size: 3rem;
+  background: rgba(0,0,0,.5);
+  padding: 1rem 2rem;
+  border-radius: 8px;
 }
-.card .top { display:flex; align-items:center; gap:.75rem; }
-.card img {
-  width:64px; height:64px; border-radius:50%; object-fit:cover; border:2px solid #333;
-  background:#000;
+
+.imagen-logo{
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+  max-width: 80%;
+  height: auto;
 }
-.card h3 { margin:.25rem 0 0; font-size:1.05rem; }
-.card p  { margin:.15rem 0; color:#bbb; font-size:.95rem; }
-.meta { margin-top:.5rem; font-size:.9rem; color:#aaa; }

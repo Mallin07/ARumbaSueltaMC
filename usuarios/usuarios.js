@@ -1,9 +1,7 @@
-// usuarios.js (ES module)
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 import { getFirestore, collection, getDocs, query, orderBy } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
-// 🔑 tu config real
 const firebaseConfig = {
   apiKey: "AIzaSyBDIpcNGu8KjndeSD8V6etZ1MeRMVYi_Yw",
   authDomain: "arsmc-873f3.firebaseapp.com",
@@ -18,39 +16,55 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
-// (opcional) proteger la página: solo usuarios logueados
 onAuthStateChanged(auth, (user) => {
   if (!user) {
-    // si quieres que solo miembros vean el listado:
     // window.location.href = "login.html";
   }
 });
 
 const grid = document.getElementById('usersGrid');
 
+function fmtMember(n) {
+  if (n === undefined || n === null || n === '') return '—';
+  const num = String(n).replace(/\D/g, '');
+  if (!num) return '—';
+  return `ARSMC - ${num.padStart(3, '0')}`;
+}
+
+// ➜ AQUÍ el mapeo definitivo para que aparezca “<cc”
+function fmtDisplacement(val) {
+  const map = {
+    "125": "125cc",
+    "300": "300&lt;cc",
+    "500": "500&lt;cc",
+    "600": "600&lt;cc",
+    "900": "900&lt;cc"
+  };
+  if (!val) return "—";
+  return map[val] || (String(val) + "cc");
+}
+
 function cardTemplate(u) {
   const photo = u.photoURL || "assets/default-avatar.png";
-  const name = u.name || '';
-  const username = u.username || '';
-  const email = u.email || '';
+  const username = u.username || 'Usuario';
+  const email = u.email || '—';
   const style = u.bikeStyle || '—';
-  const disp = u.displacement || '—';
-  const member = u.memberNumber || '—';
+  const disp = fmtDisplacement(u.displacement);
+  const member = fmtMember(u.memberNumber);
 
   return `
   <article class="card">
     <div class="top">
-      <img src="${photo}" alt="Foto de ${username || name}">
+      <img src="${photo}" alt="Foto de ${username}">
       <div>
-        <h3>${username || name || 'Usuario'}</h3>
-        <p>${name ? name : ''}</p>
+        <h3>${username}</h3>
       </div>
     </div>
     <div class="meta">
       <p><strong>Correo:</strong> ${email}</p>
       <p><strong>Estilo:</strong> ${style}</p>
       <p><strong>Cilindrada:</strong> ${disp}</p>
-      <p><strong>Nº socio:</strong> ${member}</p>
+      <p><strong>Matrícula de socio:</strong> ${member}</p>
     </div>
   </article>`;
 }
@@ -60,9 +74,7 @@ async function loadUsers() {
   const q = query(collection(db, "users"), orderBy("username", "asc"));
   const snap = await getDocs(q);
   const html = [];
-  snap.forEach(docSnap => {
-    html.push(cardTemplate(docSnap.data()));
-  });
+  snap.forEach(docSnap => html.push(cardTemplate(docSnap.data())));
   grid.innerHTML = html.length ? html.join("") : "<p>No hay usuarios todavía.</p>";
 }
 

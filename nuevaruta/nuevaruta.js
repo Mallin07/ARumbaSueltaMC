@@ -25,15 +25,19 @@ const form = document.getElementById('routeForm');
 const routeNameEl = document.getElementById('routeName');
 const routeDateEl = document.getElementById('routeDate');
 const routeTimeEl = document.getElementById('routeTime');
+const arrivalTimeEl = document.getElementById('arrivalTime');   // opcional
+
+// Salida: nombre + link
+const startNameEl = document.getElementById('startName');
 const startLinkEl = document.getElementById('startLink');
-const stopsListEl = document.getElementById('stopsList');
-const addStopBtn = document.getElementById('addStopBtn');
+
+const distanceKmEl = document.getElementById('distanceKm');     // opcional
 const endPointEl = document.getElementById('endPoint');
-const routeLinkEl = document.getElementById('routeLink');
+const routeLinkEl = document.getElementById('routeLink');       // opcional
 const formError = document.getElementById('formError');
 const cancelBtn = document.getElementById('cancelBtn');
 
-// NUEVO: comidas y velocidad
+// comidas / velocidad
 const breakfastEl = document.getElementById('breakfast');
 const lunchEl = document.getElementById('lunch');
 
@@ -48,85 +52,86 @@ function isGoogleMapsUrl(url) {
     const u = new URL(url.trim());
     const h = u.host.toLowerCase();
     const p = u.pathname;
-    // google.<tld>/maps..., goo.gl/maps..., g.co/maps..., maps.app.goo.gl/...
     const isGoogleHost = /(^|\.)google\.[a-z.]+$/.test(h) && (p.startsWith("/maps") || u.searchParams.has("q"));
     const isShort = (h === "goo.gl" || h === "g.co") && p.startsWith("/maps");
-    const isApp = h === "maps.app.goo.gl"; // cualquier path
+    const isApp = h === "maps.app.goo.gl";
     return isGoogleHost || isShort || isApp;
   } catch { return false; }
 }
 
-function addStopInput(value = "") {
-  const row = document.createElement('div');
-  row.className = 'stop-row';
-
-  const input = document.createElement('input');
-  input.type = 'text';
-  input.placeholder = 'Nombre de la parada';
-  input.value = value;
-
-  const del = document.createElement('button');
-  del.type = 'button';
-  del.className = 'icon-btn';
-  del.title = 'Eliminar';
-  del.innerHTML = '✕';
-  del.addEventListener('click', () => row.remove());
-
-  row.appendChild(input);
-  row.appendChild(del);
-  stopsListEl.appendChild(row);
+function toDateTime(dateStr, timeStr) {
+  const [y,m,d] = dateStr.split('-').map(Number);
+  const [hh,mm] = timeStr.split(':').map(Number);
+  return new Date(y, m - 1, d, hh, mm, 0, 0);
 }
-
-// añade una primera fila de parada vacía por ergonomía
-addStopInput();
-addStopBtn.addEventListener('click', () => addStopInput());
 
 // --------- submit ----------
 form.addEventListener('submit', async (e) => {
   e.preventDefault();
   formError.textContent = '';
 
-  // Validaciones mínimas
+  // Validaciones obligatorias
   if (!routeNameEl.value.trim()) return (formError.textContent = 'Pon un nombre a la ruta.');
   if (!routeDateEl.value) return (formError.textContent = 'Selecciona una fecha.');
   if (!routeTimeEl.value) return (formError.textContent = 'Indica la hora de salida.');
+  if (!startNameEl.value.trim()) return (formError.textContent = 'Indica el nombre del punto de salida.');
   if (!startLinkEl.value || !isGoogleMapsUrl(startLinkEl.value)) {
-    return (formError.textContent = 'El punto de salida debe ser un enlace válido de Google Maps.');
+    return (formError.textContent = 'El enlace del punto de salida debe ser válido de Google Maps.');
   }
   if (!endPointEl.value.trim()) return (formError.textContent = 'Indica el punto de llegada.');
-  if (!routeLinkEl.value || !isGoogleMapsUrl(routeLinkEl.value)) {
+
+  // Opcionales con validación condicional
+  // llegada: si existe, no puede ser anterior a la salida (mismo día)
+  if (arrivalTimeEl.value) {
+    const dep = toDateTime(routeDateEl.value, routeTimeEl.value);
+    const arr = toDateTime(routeDateEl.value, arrivalTimeEl.value);
+    if (arr < dep) return (formError.textContent = 'La hora de llegada no puede ser anterior a la hora de salida.');
+  }
+
+  // distancia: si existe, debe ser > 0
+  if (distanceKmEl.value) {
+    const distance = Number(distanceKmEl.value);
+    if (!Number.isFinite(distance) || distance <= 0) {
+      return (formError.textContent = 'Indica una distancia válida en kilómetros (mayor que 0).');
+    }
+  }
+
+  // routeLink: si existe, debe ser Google Maps válido
+  if (routeLinkEl.value && !isGoogleMapsUrl(routeLinkEl.value)) {
     return (formError.textContent = 'El enlace de la ruta debe ser un enlace válido de Google Maps.');
   }
 
-  // NUEVO: velocidad seleccionada
+  // Velocidad
   const speed = form.querySelector('input[name="speed"]:checked')?.value;
   if (!speed) return (formError.textContent = 'Selecciona la velocidad.');
 
-  // NUEVO: comidas
+  // Comidas
   if (!breakfastEl?.value) return (formError.textContent = 'Selecciona el desayuno.');
   if (!lunchEl?.value) return (formError.textContent = 'Selecciona la comida.');
-
-  // Paradas (no vacías)
-  const stops = Array.from(stopsListEl.querySelectorAll('input[type="text"]'))
-    .map(i => i.value.trim())
-    .filter(Boolean);
 
   const user = auth.currentUser;
   if (!user) return (formError.textContent = "Inicia sesión.");
 
+  // Construcción del payload (añade opcionales solo si tienen valor)
   const payload = {
     name: routeNameEl.value.trim(),
-    date: routeDateEl.value,                 // YYYY-MM-DD
-    time: routeTimeEl.value,                 // HH:MM
-    startLink: startLinkEl.value.trim(),
-    stops,                                   // array<string>
-    endPoint: endPointEl.value.trim(),
-    routeLink: routeLinkEl.value.trim(),
 
-    // NUEVO:
-    speed,                                   // 'chill' | 'alegre' | 'album'
+    date: routeDateEl.value,               // YYYY-MM-DD
+    time: routeTimeEl.value,               // HH:MM (salida)
+    ...(arrivalTimeEl.value && { arrivalTime: arrivalTimeEl.value }),
+
+    start: {
+      name: startNameEl.value.trim(),
+      link: startLinkEl.value.trim(),
+    },
+
+    endPoint: endPointEl.value.trim(),
+    ...(routeLinkEl.value && { routeLink: routeLinkEl.value.trim() }),
+    ...(distanceKmEl.value && { distanceKm: Number(distanceKmEl.value) }),
+
+    speed,                                 // 'chill' | 'alegre' | 'album'
     meals: {
-      breakfast: breakfastEl.value,          // 'casa' | 'bocata' | 'restaurante'
+      breakfast: breakfastEl.value,        // 'casa' | 'bocata' | 'restaurante'
       lunch: lunchEl.value
     },
 
@@ -142,7 +147,7 @@ form.addEventListener('submit', async (e) => {
     await addDoc(collection(db, "routes"), payload);
 
     alert("Ruta guardada correctamente.");
-    window.location.href = "rutas.html";
+    window.location.href = "../rutas/rutas.html";
   } catch (err) {
     console.error("Error guardando ruta:", err);
     form.querySelector('button[type="submit"]').disabled = false;
@@ -151,5 +156,5 @@ form.addEventListener('submit', async (e) => {
 });
 
 cancelBtn.addEventListener('click', () => {
-  if (confirm("¿Descartar cambios?")) window.location.href = "rutas.html";
+  if (confirm("¿Descartar cambios?")) window.location.href = "../rutas/rutas.html";
 });

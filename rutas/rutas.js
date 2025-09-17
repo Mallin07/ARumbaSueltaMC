@@ -23,6 +23,7 @@ const db = getFirestore(app);
 // UI
 const routesList = document.getElementById("routesList");
 const emptyMsg = document.getElementById("emptyMsg");
+const EMPTY_TEXT = emptyMsg.textContent; // "No hay rutas próximas."
 
 // Helpers
 const todayStr = () => new Date().toLocaleDateString("sv-SE"); // YYYY-MM-DD
@@ -37,34 +38,57 @@ function mealLabel(v){
   return v === "casa" ? "En casa" : v === "bocata" ? "Bocatas" : v === "restaurante" ? "Restaurante" : "—";
 }
 
+// Compat: salida nombre + link (nuevo o antiguo)
+function getStartInfo(data){
+  const name = data.start?.name || "Salida";
+  const link = data.start?.link || data.startLink || "";
+  return { name, link };
+}
+
+function fmtDistance(km){
+  if (km === undefined || km === null || Number.isNaN(Number(km))) return "— km";
+  const n = Number(km);
+  return (Number.isInteger(n) ? n : n.toFixed(1)) + " km";
+}
+
 function routeCardTemplate(routeId, data, joined, count){
-  const stopsText = (data.stops?.length ? `${data.stops.length} parada(s)` : "Sin paradas");
   const speed = speedLabel(data.speed);
   const breakfast = mealLabel(data.meals?.breakfast);
   const lunch = mealLabel(data.meals?.lunch);
+  const { name: startName, link: startLink } = getStartInfo(data);
+
+  const arrival = data.arrivalTime || "—";
+  const distanceTxt = fmtDistance(data.distanceKm);
 
   return `
     <div class="route" data-id="${routeId}">
       <div>
-        <h2>${data.name}</h2>
+        <h2>${data.name || "Ruta"}</h2>
         <div class="meta">
-          <span>📅 ${data.date}</span>
-          <span>⏰ ${data.time}</span>
-          <span>🚩 <a class="link" href="${data.startLink}" target="_blank" rel="noreferrer">Salida</a></span>
-          <span>🏁 ${data.endPoint}</span>
-          <span>🗺️ <a class="link" href="${data.routeLink}" target="_blank" rel="noreferrer">Ruta</a></span>
+          <span>📅 ${data.date || "—"}</span>
+          <span>⏱️ ${data.time || "—"} — ${arrival}</span>
+          <span>🚩 ${
+            startLink
+              ? `<a class="link" href="${startLink}" target="_blank" rel="noreferrer">${startName}</a>`
+              : `${startName}`
+          }</span>
+          <span>🏁 ${data.endPoint || "—"}</span>
+          ${data.routeLink ? `<span>🗺️ <a class="link" href="${data.routeLink}" target="_blank" rel="noreferrer">Ruta</a></span>` : ""}
         </div>
+
         <div class="badges" style="margin-top:.4rem;">
-          <span class="badge">${stopsText}</span>
-          <span class="badge">${speed}</span>
+          <span class="badge">Velocidad: ${speed}</span>
           <span class="badge">Desayuno: ${breakfast}</span>
           <span class="badge">Comida: ${lunch}</span>
+          <span class="badge">Distancia: ${distanceTxt}</span>
         </div>
       </div>
 
       <div class="actions">
-        <button class="btn join-btn" data-id="${routeId}">${joined ? "Desapuntarme" : "Apuntarme"}</button>
-        <button class="btn ghost toggle-att" data-id="${routeId}">Apuntados</button>
+        <button class="btn join-btn ${joined ? "danger" : ""}" data-id="${routeId}">
+          ${joined ? "Desapuntarme" : "Apuntarme"}
+        </button>
+        <button class="btn toggle-att" data-id="${routeId}">Apuntados</button>
         <span class="count" data-id="${routeId}">(${count})</span>
       </div>
 
@@ -139,34 +163,41 @@ async function toggleJoin(routeId){
 let unsubscribe = null;
 
 function attachButtonHandlers(){
-  // Evita duplicar listeners: primero elimina todos clonando el nodo
-  const fresh = routesList.cloneNode(true);
-  routesList.parentNode.replaceChild(fresh, routesList);
-
-  // Re-selecciona tras el replace
   const container = document.getElementById("routesList");
 
+  // --- JOIN / DESAPUNTAR ---
+  container.querySelectorAll(".join-btn").forEach(btn => {
+    btn.replaceWith(btn.cloneNode(true)); // limpia listeners previos
+  });
   container.querySelectorAll(".join-btn").forEach(btn => {
     btn.addEventListener("click", async (e) => {
-      const rid = e.currentTarget.getAttribute("data-id");
-      e.currentTarget.disabled = true;
-      try{
+      const rid = e.currentTarget.dataset.id;
+      btn.disabled = true;
+      try {
         const res = await toggleJoin(rid);
-        e.currentTarget.textContent = res.joined ? "Desapuntarme" : "Apuntarme";
+        btn.textContent = res.joined ? "Desapuntarme" : "Apuntarme";
+        btn.classList.toggle("danger", res.joined);
+
         const countEl = container.querySelector(`.count[data-id="${rid}"]`);
         const current = parseInt(countEl.textContent.replace(/[()]/g,"")) || 0;
-        countEl.textContent = `(${res.joined ? current+1 : current-1})`;
-      } finally{
-        e.currentTarget.disabled = false;
+        countEl.textContent = `(${res.joined ? current + 1 : current - 1})`;
+      } finally {
+        btn.disabled = false;
       }
     });
   });
 
+  // --- APUNTADOS (abrir/cerrar lista) ---
+  container.querySelectorAll(".toggle-att").forEach(btn => {
+    btn.replaceWith(btn.cloneNode(true)); // limpia listeners previos
+  });
   container.querySelectorAll(".toggle-att").forEach(btn => {
     btn.addEventListener("click", async (e) => {
-      const rid = e.currentTarget.getAttribute("data-id");
+      const rid = e.currentTarget.dataset.id;
       const panel = document.getElementById(`att-${rid}`);
-      if (!panel?.classList.contains("open")){
+      if (!panel) return;
+
+      if (!panel.classList.contains("open")){
         await loadAttendees(rid);
       } else {
         panel.classList.remove("open");
@@ -196,8 +227,15 @@ function setupList(){
   const render = async (snap) => {
     const container = document.getElementById("routesList");
     container.innerHTML = "";
-    if (snap.empty){ emptyMsg.hidden = false; return; }
+
+    if (snap.empty){
+      emptyMsg.textContent = EMPTY_TEXT; // asegura el texto correcto
+      emptyMsg.hidden = false;
+      return;
+    }
+
     emptyMsg.hidden = true;
+    emptyMsg.textContent = EMPTY_TEXT;
 
     const uid = auth.currentUser?.uid;
 
@@ -220,14 +258,13 @@ function setupList(){
   // Limpia anterior suscripción si la hubiera
   if (typeof unsubscribe === "function") { unsubscribe(); unsubscribe = null; }
 
-  // Intenta con compuesta; si falla por índice, usa simple
+  // Intenta con compuesta; si falla por índice, usa simple (sin tocar emptyMsg para "cargando…")
   unsubscribe = onSnapshot(
     qCompound,
     render,
     (error) => {
       console.warn("Consulta compuesta falló:", error);
       if (error?.code === "failed-precondition") {
-        // falta índice: reintenta con consulta simple
         if (typeof unsubscribe === "function") { unsubscribe(); }
         unsubscribe = onSnapshot(
           qSimple,
@@ -241,8 +278,6 @@ function setupList(){
                 : "No se pudieron cargar las rutas.";
           }
         );
-        emptyMsg.hidden = false;
-        emptyMsg.textContent = "Cargando sin ordenar por hora (crea el índice date+time para ordenar mejor).";
       } else if (error?.code === "permission-denied") {
         emptyMsg.hidden = false;
         emptyMsg.textContent = "No tienes permiso para leer las rutas (revisa reglas).";
@@ -256,5 +291,6 @@ function setupList(){
 
 // Auth + init
 onAuthStateChanged(auth, () => {
-  setupList(); // lista visible también para no logueados; al unirse se fuerza login
+  setupList(); // visible también para no logueados; al unirse se fuerza login
 });
+

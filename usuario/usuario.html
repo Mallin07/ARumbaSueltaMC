@@ -8,36 +8,31 @@
 </head>
 <body>
   <header>
-
     <nav>
       <ul class="menu">
         <li><a href="../principal/principal.html">Inicio</a></li>
-        <li><a href="rutas.html">Rutas</a></li>
-        <li><a href="nueva-ruta.html">Nueva Ruta</a></li>
+        <li><a href="../rutas/rutas.html">Rutas</a></li>
+        <li><a href="../nuevaruta/nuevaruta.html">Nueva Ruta</a></li>
         <li><a href="../usuarios/usuarios.html">Usuarios</a></li>
-        <li><a href="galeria.html">Galería</a></li>
+        <li><a href="../galeria/galeria.html">Galería</a></li>
       </ul>
     </nav>
   </header>
 
-
   <main class="container">
     <section class="card" id="userCard">
-      
       <div class="photo-area">
         <img id="userPhoto" src="assets/default-avatar.png" alt="Foto de perfil del usuario">
         <input type="file" id="photoInput" accept="image/*" aria-label="Subir foto" hidden>
-        <button class="btn secondary" id="changePhotoBtn" type="button" disabled>Cambiar foto</button>
+        <!-- Mostrar solo en modo edición -->
+        <button class="btn secondary" id="changePhotoBtn" type="button" hidden>Cambiar foto</button>
 
-        <!-- NUEVO: Nº de matrícula / socio -->
         <p id="memberNumber" class="member-number">Matrícula de usuario: </p>
         <p><span id="memberValue">—</span></p>
       </div>
 
       <form id="userForm" class="fields" novalidate>
-        <!-- Nombre visible (nombre real) -->
-        <label for="nameInput">Nombre</label>
-        <input id="nameInput" type="text" placeholder="Tu nombre" disabled>
+        <!-- (Eliminado campo Nombre) -->
 
         <!-- Nombre de usuario (username / nick) -->
         <label for="usernameInput">Usuario</label>
@@ -50,7 +45,6 @@
         <!-- Estilo de moto -->
         <label for="bikeStyleSelect">Estilo de moto</label>
         <select id="bikeStyleSelect" disabled>
-          <!-- orden alfabético -->
           <option value="">-- Selecciona --</option>
           <option value="custom">Custom</option>
           <option value="naked">Naked</option>

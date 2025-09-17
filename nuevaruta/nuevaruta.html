@@ -8,104 +8,108 @@
 </head>
 <body>
   <header>
-
     <nav>
       <ul class="menu">
         <li><a href="../principal/principal.html">Inicio</a></li>
         <li><a href="../rutas/rutas.html">Rutas</a></li>
-        <li><a href="nueva-ruta.html">Nueva Ruta</a></li>
+        <li><a href="nuevaruta.html" aria-current="page">Nueva Ruta</a></li>
         <li><a href="../usuarios/usuarios.html">Usuarios</a></li>
         <li><a href="../galeria/galeria.html">Galería</a></li>
+      </ul>
     </nav>
 
     <div class="user-btn-container">
       <a href="../usuario/usuario.html" class="user-btn">Usuario</a>
     </div>
-    
   </header>
 
   <main class="container">
     <section class="card">
       <h1 style="grid-column:1 / -1; margin:0 0 .5rem;">Crear nueva ruta</h1>
 
-      <!-- Reutiliza .fields para inputs con el mismo look -->
       <form id="routeForm" class="fields" novalidate>
-        <label for="routeName">Nombre de la ruta</label>
+        <label for="routeName">Nombre de la ruta <span class="req">*</span></label>
         <input id="routeName" type="text" required placeholder="Ruta por la sierra">
 
-        <!-- Fila en dos columnas (fecha / hora) -->
-        <div class="inline-2">
+        <!-- Fecha / horas -->
+        <div class="inline-3">
           <div>
-            <label for="routeDate">Fecha</label>
+            <label for="routeDate">Fecha <span class="req">*</span></label>
             <input id="routeDate" type="date" required>
           </div>
           <div>
-            <label for="routeTime">Hora de salida</label>
+            <label for="routeTime">Hora de salida <span class="req">*</span></label>
             <input id="routeTime" type="time" required>
+          </div>
+          <div>
+            <label for="arrivalTime">Hora de llegada (opcional)</label>
+            <input id="arrivalTime" type="time">
           </div>
         </div>
 
-        <label for="startLink">Punto de salida (enlace Google Maps)</label>
+        <!-- Salida: nombre + enlace -->
+        <label for="startName">Punto de salida (nombre) <span class="req">*</span></label>
+        <input id="startName" type="text" required placeholder="Plaza Mayor, Madrid / Mirador X">
+
+        <label for="startLink">Punto de salida (enlace Google Maps) <span class="req">*</span></label>
         <input id="startLink" type="url" required placeholder="https://maps.google.com/..." inputmode="url">
 
-        <div class="stops-header">
-          <h2>Paradas</h2>
-          <button id="addStopBtn" type="button" class="btn secondary">Añadir parada</button>
-        </div>
+        <!-- Distancia -->
+        <label for="distanceKm">Distancia (km) (opcional)</label>
+        <input id="distanceKm" type="number" step="0.1" placeholder="ej. 42.5">
 
-        <div id="stopsList" class="stops-list"><!-- se insertan filas aquí --></div>
-
-        <label for="endPoint">Punto de llegada</label>
+        <!-- Punto de llegada -->
+        <label for="endPoint">Punto de llegada <span class="req">*</span></label>
         <input id="endPoint" type="text" required placeholder="Plaza Mayor, Pueblo X">
 
-        <label for="routeLink">Enlace a la ruta (Google Maps)</label>
-        <input id="routeLink" type="url" required placeholder="https://maps.google.com/..." inputmode="url">
+        <label for="routeLink">Enlace a la ruta (Google Maps) (opcional)</label>
+        <input id="routeLink" type="url" placeholder="https://maps.google.com/..." inputmode="url">
 
         <p id="formError" class="error" aria-live="polite"></p>
 
-        <!-- 🔥 NUEVO: Velocidad -->
-<fieldset class="group">
-  <legend>Velocidad</legend>
-  <div class="radio-chips">
-    <label class="chip">
-      <input type="radio" name="speed" value="chill">
-      <span>Vamos del chill 🐢</span>
-    </label>
-    <label class="chip">
-      <input type="radio" name="speed" value="alegre">
-      <span>Alegres pero sin peligro ⚡</span>
-    </label>
-    <label class="chip">
-      <input type="radio" name="speed" value="album">
-      <span>Queremos un álbum de fotos 📸</span>
-    </label>
-  </div>
-</fieldset>
+        <!-- Velocidad -->
+        <fieldset class="group">
+          <legend>Velocidad <span class="req">*</span></legend>
+          <div class="radio-chips">
+            <label class="chip">
+              <input type="radio" name="speed" value="chill">
+              <span>Vamos del chill 🐢</span>
+            </label>
+            <label class="chip">
+              <input type="radio" name="speed" value="alegre">
+              <span>Alegres pero sin peligro ⚡</span>
+            </label>
+            <label class="chip">
+              <input type="radio" name="speed" value="album">
+              <span>Queremos un álbum de fotos 📸</span>
+            </label>
+          </div>
+        </fieldset>
 
-<!-- 🔥 NUEVO: Comidas -->
-<fieldset class="group">
-  <legend>Comidas</legend>
-  <div class="grid-2">
-    <div>
-      <label for="breakfast">Desayuno</label>
-      <select id="breakfast" required>
-        <option value="">-- Selecciona --</option>
-        <option value="casa">En casa</option>
-        <option value="bocata">Bocatas</option>
-        <option value="restaurante">Restaurante</option>
-      </select>
-    </div>
-    <div>
-      <label for="lunch">Comida</label>
-      <select id="lunch" required>
-        <option value="">-- Selecciona --</option>
-        <option value="casa">En casa</option>
-        <option value="bocata">Bocatas</option>
-        <option value="restaurante">Restaurante</option>
-      </select>
-    </div>
-  </div>
-</fieldset>
+        <!-- Comidas -->
+        <fieldset class="group">
+          <legend>Comidas</legend>
+          <div class="grid-2">
+            <div>
+              <label for="breakfast">Desayuno <span class="req">*</span></label>
+              <select id="breakfast" required>
+                <option value="">-- Selecciona --</option>
+                <option value="casa">En casa</option>
+                <option value="bocata">Bocatas</option>
+                <option value="restaurante">Restaurante</option>
+              </select>
+            </div>
+            <div>
+              <label for="lunch">Comida <span class="req">*</span></label>
+              <select id="lunch" required>
+                <option value="">-- Selecciona --</option>
+                <option value="casa">En casa</option>
+                <option value="bocata">Bocatas</option>
+                <option value="restaurante">Restaurante</option>
+              </select>
+            </div>
+          </div>
+        </fieldset>
 
         <div class="actions">
           <button class="btn" id="saveBtn" type="submit">Guardar ruta</button>

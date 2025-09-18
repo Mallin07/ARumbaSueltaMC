@@ -71,11 +71,20 @@ function cardTemplate(u) {
 
 async function loadUsers() {
   grid.innerHTML = "Cargando...";
-  const q = query(collection(db, "users"), orderBy("username", "asc"));
-  const snap = await getDocs(q);
-  const html = [];
-  snap.forEach(docSnap => html.push(cardTemplate(docSnap.data())));
-  grid.innerHTML = html.length ? html.join("") : "<p>No hay usuarios todavía.</p>";
+  try {
+    const q = query(collection(db, "users"), orderBy("username", "asc"));
+    const snap = await getDocs(q);
+
+    const html = [];
+    snap.forEach(docSnap => html.push(cardTemplate(docSnap.data())));
+    grid.innerHTML = html.length
+      ? html.join("")
+      : "<p>No hay usuarios todavía.</p>";
+
+  } catch (err) {
+    console.error("Error al cargar usuarios:", err);
+    grid.innerHTML = "<p>No se pudieron cargar los usuarios (permisos o conexión).</p>";
+  }
 }
 
 loadUsers();
